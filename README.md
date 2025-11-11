@@ -10,4 +10,4 @@
 | **GPIO 22** | I2C1 SCL  | SSD1306 OLED     | SCL        | I²C clock line    |
 | **GPIO 33** | Blue LED  | LED              | VCC        |                   |
 | **GPIO 32** | Green LED | LED              | VCC        |                   |
-| **GPIO 35** | Red LED   | LED              | VCC        |                   |
+| **GPIO 25** | Red LED   | LED              | VCC        |                   |
