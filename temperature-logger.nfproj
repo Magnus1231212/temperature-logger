@@ -20,6 +20,7 @@
   <ItemGroup>
     <Compile Include="Dep\BasicFont.cs" />
     <Compile Include="Dep\DoubleByteFont.cs" />
+    <Compile Include="Modules\Knapper.cs" />
     <Compile Include="Modules\Display.cs" />
     <Compile Include="Modules\Lysdioder.cs" />
     <Compile Include="Program.cs" />
