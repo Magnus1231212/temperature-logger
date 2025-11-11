@@ -17,12 +17,7 @@ namespace temperature_logger
 
         public static void DisplayOled()
         {
-            Configuration.SetPinFunction(22, DeviceFunction.I2C1_CLOCK);
-            Configuration.SetPinFunction(21, DeviceFunction.I2C1_DATA);
-
             SetupOLED();
-
-            Thread.Sleep(Timeout.Infinite);
         }
 
         // === SETUP METHODE ===
