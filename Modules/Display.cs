@@ -20,10 +20,6 @@ namespace temperature_logger.Modules
 
         public static void DisplayOled()
         {
-            // Tildeler ESP32’s ben 21 og 22 til I2C-kommunikation
-            Configuration.SetPinFunction(22, DeviceFunction.I2C1_CLOCK);
-            Configuration.SetPinFunction(21, DeviceFunction.I2C1_DATA);
-
             // Klargør og initialiserer selve OLED-displayet
             SetupOLED();
         }
