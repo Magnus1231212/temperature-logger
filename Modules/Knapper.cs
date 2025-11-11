@@ -7,24 +7,24 @@ namespace temperature_logger.Modules
     /// <summary>
     /// Knapper: +, -, Reset/Wake
     /// - Reset: kort tryk = WakeRequested; langt tryk = StartApSetupRequested
-    /// - Opdaterer Lysdioder efter hver ændring, så LED-status matcher tolerance-logikken.
+    /// - Bruger Display.CurrentTemperature / Display.DesiredTemperature som single source of truth.
+    /// - Opdaterer OLED og LED’er ved ændringer.
     /// </summary>
     internal static class Knapper
     {
         // ***** GPIO pins (ændr hvis nødvendigt) *****
-        private const int PLUS_PIN = 25; // + knap
-        private const int MINUS_PIN = 20; // - knap
-        private const int RESET_PIN = 11; // Reset/Wake
+        private const int PLUS_PIN = 12;  // + knap
+        private const int MINUS_PIN = 13; // - knap
+        private const int RESET_PIN = 14; // Reset/Wake
 
         // Debounce og længde på langt tryk
         private static int _debounceMs = 150;
         private static int _longPressMs = 10000;
 
-        // Temperatur-step pr. tryk og gældende setpoint
-        public static double DesiredTemperature { get; private set; } = 21.0;
+        // Trinstørrelse pr. tryk
         private static double _stepDegrees = 0.5;
 
-        // Aktuel temperatur (hentes via delegate, så vi ikke binder til sensor-modul)
+        // (Valgfri) fallback hvis Display.CurrentTemperature ikke er sat endnu
         private static Func<double>? _getCurrentTemperature;
 
         private static GpioController _gpio = null!;
@@ -37,23 +37,23 @@ namespace temperature_logger.Modules
         private static long _lastResetEdgeMs = 0;
 
         // Events til resten af systemet
-        public static event Action<double>? DesiredTemperatureChanged;   // sender ny desired
-        public static event Action? WakeRequested;                       // kort tryk
-        public static event Action? StartApSetupRequested;               // langt tryk
+        public static event Action<double>? DesiredTemperatureChanged; // sender ny desired (fra Display)
+        public static event Action? WakeRequested;                     // kort tryk
+        public static event Action? StartApSetupRequested;             // langt tryk
 
-        // Initialiser knapper.
         public static void Setup(
             Func<double> getCurrentTemperature,
-            double initialDesired = 21.0,
+            double initialDesired = 22.0,
             double stepDegrees = 0.5,
             int longPressMs = 10000,
             int debounceMs = 150)
         {
+            // Synkronisér ønsket temperatur til displayet
+            Display.DesiredTemperature = initialDesired;
+
             if (_isInitialized)
             {
-                // Tillad runtime-justeringer
                 _getCurrentTemperature = getCurrentTemperature;
-                DesiredTemperature = initialDesired;
                 _stepDegrees = stepDegrees;
                 _longPressMs = longPressMs;
                 _debounceMs = debounceMs;
@@ -61,7 +61,6 @@ namespace temperature_logger.Modules
             }
 
             _getCurrentTemperature = getCurrentTemperature;
-            DesiredTemperature = initialDesired;
             _stepDegrees = stepDegrees;
             _longPressMs = longPressMs;
             _debounceMs = debounceMs;
@@ -72,7 +71,6 @@ namespace temperature_logger.Modules
             OpenPinInput(MINUS_PIN);
             OpenPinInput(RESET_PIN);
 
-            // Registrer edge callbacks
             _gpio.RegisterCallbackForPinValueChangedEvent(PLUS_PIN, PinEventTypes.Rising, OnPlusRising);
             _gpio.RegisterCallbackForPinValueChangedEvent(MINUS_PIN, PinEventTypes.Rising, OnMinusRising);
             _gpio.RegisterCallbackForPinValueChangedEvent(RESET_PIN, PinEventTypes.Rising, OnResetRising);
@@ -84,14 +82,8 @@ namespace temperature_logger.Modules
 
         private static void OpenPinInput(int pin)
         {
-            try
-            {
-                if (_gpio.IsPinOpen(pin)) _gpio.ClosePin(pin);
-            }
-            catch { /* nogle drivere mangler IsPinOpen */ }
-
-            // Eksterne pulldown-modstande er i opgaven -> brug Input
-            _gpio.OpenPin(pin, PinMode.Input);
+            try { if (_gpio.IsPinOpen(pin)) _gpio.ClosePin(pin); } catch { /* nogle drivere mangler IsPinOpen */ }
+            _gpio.OpenPin(pin, PinMode.Input); // eksterne pulldowns -> ren Input
         }
 
         private static long NowMs() => Environment.TickCount64;
@@ -109,10 +101,12 @@ namespace temperature_logger.Modules
         {
             if (!Debounced(ref _lastPlusEventMs, _debounceMs)) return;
 
-            DesiredTemperature = Math.Round(DesiredTemperature + _stepDegrees, 2);
-            DesiredTemperatureChanged?.Invoke(DesiredTemperature);
+            Display.DesiredTemperature = Math.Round(Display.DesiredTemperature + _stepDegrees, 2);
+            DesiredTemperatureChanged?.Invoke(Display.DesiredTemperature);
             UpdateLeds();
-            Debug.WriteLine($"[BTN] + pressed -> Desired={DesiredTemperature:0.00}°C");
+            Display.ShowTemperatureDisplay();
+
+            Debug.WriteLine($"[BTN] + pressed -> Desired={Display.DesiredTemperature:0.00}°C");
         }
 
         // - knap: ét trin ned
@@ -120,10 +114,12 @@ namespace temperature_logger.Modules
         {
             if (!Debounced(ref _lastMinusEventMs, _debounceMs)) return;
 
-            DesiredTemperature = Math.Round(DesiredTemperature - _stepDegrees, 2);
-            DesiredTemperatureChanged?.Invoke(DesiredTemperature);
+            Display.DesiredTemperature = Math.Round(Display.DesiredTemperature - _stepDegrees, 2);
+            DesiredTemperatureChanged?.Invoke(Display.DesiredTemperature);
             UpdateLeds();
-            Debug.WriteLine($"[BTN] - pressed -> Desired={DesiredTemperature:0.00}°C");
+            Display.ShowTemperatureDisplay();
+
+            Debug.WriteLine($"[BTN] - pressed -> Desired={Display.DesiredTemperature:0.00}°C");
         }
 
         // Reset/Wake: Rising = knap ned (start tid)
@@ -154,42 +150,35 @@ namespace temperature_logger.Modules
         }
 
         /// <summary>
-        /// Kaldes når desired ændres, så LED-status følger samme tolerance-logik som Lysdioder.
+        /// Opdater LED-status så den følger samme tolerance-logik som Lysdioder.
+        /// Bruger Display.CurrentTemperature/DesiredTemperature; falder tilbage til delegate hvis nødvendigt.
+        /// Skipper opdatering hvis værdier er NaN.
         /// </summary>
         private static void UpdateLeds()
         {
-            if (_getCurrentTemperature == null) return;
+            double current = Display.CurrentTemperature;
+            double desired = Display.DesiredTemperature;
+
+            // Fallback til delegate hvis current ikke er gyldig
+            if (double.IsNaN(current) && _getCurrentTemperature != null)
+            {
+                try { current = _getCurrentTemperature(); } catch { /* ignorer enkelt-fejl */ }
+            }
+
+            // Guard mod NaN
+            if (double.IsNaN(current) || double.IsNaN(desired))
+            {
+                Debug.WriteLine("[BTN] UpdateLeds skipped (NaN temperature)");
+                return;
+            }
 
             try
             {
-                var current = _getCurrentTemperature();
-                Lysdioder.UpdateStatus(current, DesiredTemperature);
+                Lysdioder.UpdateStatus(current, desired);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[BTN] UpdateLeds error: {ex.Message}");
-            }
-        }
-
-        public static void Dispose()
-        {
-            if (!_isInitialized) return;
-
-            try
-            {
-                _gpio.UnregisterCallbackForPinValueChangedEvent(PLUS_PIN, OnPlusRising);
-                _gpio.UnregisterCallbackForPinValueChangedEvent(MINUS_PIN, OnMinusRising);
-                _gpio.UnregisterCallbackForPinValueChangedEvent(RESET_PIN, OnResetRising);
-                _gpio.UnregisterCallbackForPinValueChangedEvent(RESET_PIN, OnResetFalling);
-
-                _gpio.ClosePin(PLUS_PIN);
-                _gpio.ClosePin(MINUS_PIN);
-                _gpio.ClosePin(RESET_PIN);
-                _gpio.Dispose();
-            }
-            finally
-            {
-                _isInitialized = false;
             }
         }
     }
