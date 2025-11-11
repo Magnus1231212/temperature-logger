@@ -22,6 +22,7 @@
     <Compile Include="Dep\DoubleByteFont.cs" />
     <Compile Include="Modules\Display.cs" />
     <Compile Include="Modules\TempSensor.cs" />
+    <Compile Include="Modules\Lysdioder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

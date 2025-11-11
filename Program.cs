@@ -4,6 +4,8 @@ using System.Threading;
 using nanoFramework.Hardware.Esp32;
 using nanoFramework.Device.OneWire;
 using temperature_logger.Modules;
+using temperature_logger.Modules;
+using static temperature_logger.Modules.Display;
 
 namespace temperature_logger
 {
@@ -29,10 +31,24 @@ namespace temperature_logger
             TempSensor.initializeTempSensor();
 
             Debug.WriteLine(TempSensor.ReadTemperature().ToString());
+            Display.DisplayOled();
+            Lysdioder.Setup(0.5);
+            UpdateSystem();
+
+
 
             Debug.WriteLine("Hello from nanoFramework!");
 
             Thread.Sleep(Timeout.Infinite);
+        }
+
+        private static void UpdateSystem()
+        {
+            // Opdater displayet
+            Display.ShowTemperatureDisplay();
+
+            // Opdater lysdioder ud fra temperaturforskellen
+            Lysdioder.UpdateStatus(Display.CurrentTemperature, Display.DesiredTemperature);
         }
 
     }
