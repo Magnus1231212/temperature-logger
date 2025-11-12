@@ -11,6 +11,9 @@
 | **GPIO 33**        | Blue LED    | LED                        | VCC        |                                      |
 | **GPIO 32**        | Green LED   | LED                        | VCC        |                                      |
 | **GPIO 25**        | Red LED     | LED                        | VCC        |                                      |
+| **GPIO 12**        | Plus Btn    | Button                     | VCC        |                                      |
+| **GPIO 13**        | Minus Btn   | Button                     | VCC        |                                      |
+| **GPIO 14**        | Wake/Reset  | LED                        | VCC        |                                      |
 | **GPIO16 (RX2)**   | Temp Sensor | DS18B20                    | DQ         | Connect to data line, shorted to TX2 |
 | **GPIO17 (TX2)**   | Temp Sensor | DS18B20                    | DQ         | Connect to data line, shorted to RX2 |
 | **3.3V**           | Temp Sensor | DS18B20                    | VDD        | Power                                |
