@@ -25,7 +25,7 @@ namespace temperature_logger.Modules
         private static double _stepDegrees = 0.5;
 
         // (Valgfri) fallback hvis Display.CurrentTemperature ikke er sat endnu
-        private static Func<double>? _getCurrentTemperature;
+        private static Func<double> _getCurrentTemperature;
 
         private static GpioController _gpio = null!;
         private static bool _isInitialized = false;
@@ -37,9 +37,9 @@ namespace temperature_logger.Modules
         private static long _lastResetEdgeMs = 0;
 
         // Events til resten af systemet
-        public static event Action<double>? DesiredTemperatureChanged; // sender ny desired (fra Display)
-        public static event Action? WakeRequested;                     // kort tryk
-        public static event Action? StartApSetupRequested;             // langt tryk
+        public static event Action<double> DesiredTemperatureChanged; // sender ny desired (fra Display)
+        public static event Action WakeRequested;                     // kort tryk
+        public static event Action StartApSetupRequested;             // langt tryk
 
         public static void Setup(
             Func<double> getCurrentTemperature,
@@ -86,7 +86,7 @@ namespace temperature_logger.Modules
             _gpio.OpenPin(pin, PinMode.Input); // eksterne pulldowns -> ren Input
         }
 
-        private static long NowMs() => Environment.TickCount64;
+        private static long NowMs() => DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
 
         private static bool Debounced(ref long lastEdgeMs, int debounceMs)
         {
@@ -101,7 +101,8 @@ namespace temperature_logger.Modules
         {
             if (!Debounced(ref _lastPlusEventMs, _debounceMs)) return;
 
-            Display.DesiredTemperature = Math.Round(Display.DesiredTemperature + _stepDegrees, 2);
+            var newVal = (Display.DesiredTemperature + _stepDegrees) * 100.0;
+            Display.DesiredTemperature = Math.Round(newVal) / 100.0;
             DesiredTemperatureChanged?.Invoke(Display.DesiredTemperature);
             UpdateLeds();
             Display.ShowTemperatureDisplay();
@@ -114,7 +115,8 @@ namespace temperature_logger.Modules
         {
             if (!Debounced(ref _lastMinusEventMs, _debounceMs)) return;
 
-            Display.DesiredTemperature = Math.Round(Display.DesiredTemperature - _stepDegrees, 2);
+            var newVal = (Display.DesiredTemperature - _stepDegrees) * 100.0;
+            Display.DesiredTemperature = Math.Round(newVal) / 100.0;
             DesiredTemperatureChanged?.Invoke(Display.DesiredTemperature);
             UpdateLeds();
             Display.ShowTemperatureDisplay();
