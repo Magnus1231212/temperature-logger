@@ -20,12 +20,6 @@ namespace temperature_logger.Modules
 
         public static void DisplayOled()
         {
-            // Klargør og initialiserer selve OLED-displayet
-            SetupOLED();
-        }
-
-        public static void SetupOLED()
-        {
             // Opretter en ny instans af SSD1306-displayet via I2C-bussen
             device = new Ssd1306(
                 I2cDevice.Create(new I2cConnectionSettings(1, Ssd1306.DefaultI2cAddress)),

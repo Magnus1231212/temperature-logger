@@ -7,6 +7,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using temperature_logger.Models;
+using temperature_logger.Dep;
 
 namespace temperature_logger.Modules
 {
@@ -53,26 +54,38 @@ namespace temperature_logger.Modules
                 if (req.HttpMethod == "POST")
                 {
                     Hashtable pars = ParseParamsFromStream(req.InputStream);
+
                     string ssid = pars["ssid"]?.ToString();
                     string password = pars["password"]?.ToString();
 
+                    string mqttHost = pars["mqtt_host"]?.ToString();
+                    int.TryParse(pars["mqtt_port"]?.ToString(), out int mqttPort);
+                    string mqttClientId = pars["mqtt_clientid"]?.ToString();
+                    string mqttUsername = pars["mqtt_username"]?.ToString();
+                    string mqttPassword = pars["mqtt_password"]?.ToString();
+
                     if (!string.IsNullOrEmpty(ssid) && !string.IsNullOrEmpty(password))
                     {
-                        Debug.WriteLine($"[Web] Received new Wi-Fi config: {ssid}/{password}");
+                        Debug.WriteLine($"[Web] Received new Config");
 
                         var cfg = new DeviceConfig
                         {
                             WifiSSID = ssid,
-                            WifiPassword = password
+                            WifiPassword = password,
+                            MQTTHost = mqttHost,
+                            MQTTPort = mqttPort,
+                            MQTTClientId = mqttClientId,
+                            MQTTUsername = mqttUsername,
+                            MQTTPassword = mqttPassword
                         };
 
-                        JsonStorage.Save(cfg, "config.json");
+                        Config.Save(cfg);
 
                         string msg = "<p>Wi-Fi configuration saved.<br>Device will reboot now.</p>";
                         SendHtml(res, BuildFormPage(msg));
 
                         Thread.Sleep(2000);
-                        WirelessAP.Disable();
+                        Wireless80211.Disable();
                         Power.RebootDevice();
                         return;
                     }
@@ -151,20 +164,61 @@ namespace temperature_logger.Modules
 
         private static string BuildFormPage(string message)
         {
-            return $@"<!DOCTYPE html><html><head>
-                    <meta charset='utf-8'>
-                    <title>ESP32 Wi-Fi Setup</title>
-                    <style>
-                    body {{ font-family: sans-serif; margin: 20px; text-align: center; }}
-                    input {{ width: 80%; margin: 5px; padding: 8px; }}
-                    </style></head><body>
-                    <h2>ESP32 Wi-Fi Configuration</h2>
-                    {message}
-                    <form method='POST'>
-                    SSID:<br><input name='ssid'><br>
-                    Password:<br><input name='password' type='password'><br>
-                    <input type='submit' value='Save & Reboot'>
-                    </form></body></html>";
+            return $@"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Temperature Logger Setup</title>
+    <style>
+        body {{ font-family: sans-serif; margin: 20px; text-align: center; }}
+        form {{ display: inline-block; text-align: left; max-width: 400px; }}
+        input {{ width: 100%; margin: 5px 0; padding: 8px; box-sizing: border-box; }}
+        h2 {{ margin-bottom: 10px; }}
+        fieldset {{ border: 1px solid #ccc; border-radius: 10px; padding: 15px; margin-bottom: 15px; }}
+        legend {{ font-weight: bold; }}
+        input[type='submit'] {{
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }}
+        input[type='submit']:hover {{
+            background-color: #45a049;
+        }}
+    </style>
+</head>
+<body>
+    <h2>Temperature Logger Configuration</h2>
+    {message}
+    <form method='POST'>
+        <fieldset>
+            <legend>WiFi Settings</legend>
+            SSID:<br>
+            <input name='ssid' placeholder='Enter WiFi SSID'><br>
+            Password:<br>
+            <input name='password' type='password' placeholder='Enter WiFi Password'><br>
+        </fieldset>
+
+        <fieldset>
+            <legend>MQTT Settings</legend>
+            Host:<br>
+            <input name='mqtt_host' placeholder='e.g. broker.hivemq.com'><br>
+            Port:<br>
+            <input name='mqtt_port' type='number' placeholder='1883'><br>
+            Client ID:<br>
+            <input name='mqtt_clientid' placeholder='Unique device ID'><br>
+            Username:<br>
+            <input name='mqtt_username' placeholder='MQTT Username'><br>
+            Password:<br>
+            <input name='mqtt_password' type='password' placeholder='MQTT Password'><br>
+        </fieldset>
+
+        <input type='submit' value='Save & Reboot'>
+    </form>
+</body>
+</html>";
         }
     }
 }

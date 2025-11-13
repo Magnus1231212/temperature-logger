@@ -30,6 +30,7 @@
     <Compile Include="Modules\TempSensor.cs" />
     <Compile Include="Modules\Lysdioder.cs" />
     <Compile Include="Modules\WebServer.cs" />
+    <Compile Include="Modules\WifiManager.cs" />
     <Compile Include="Modules\WirelessAP.cs" />
     <Compile Include="Modules\Wifi.cs" />
     <Compile Include="Program.cs" />

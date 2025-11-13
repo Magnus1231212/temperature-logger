@@ -40,30 +40,6 @@ namespace temperature_logger.Modules
         }
 
         /// <summary>
-        /// Coonnects to the Wifi or sets the Access Point mode.
-        /// </summary>
-        /// <returns>True if access point is setup.</returns>
-        public static bool ConnectOrSetAp()
-        {
-            if (IsEnabled())
-            {
-                Debug.WriteLine("Wireless client activated");
-                if (!WifiNetworkHelper.Reconnect(true, token: new CancellationTokenSource(30_000).Token))
-                {
-                    WirelessAP.SetWifiAp();
-                    return true;
-                }
-            }
-            else
-            {
-                WirelessAP.SetWifiAp();
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// Disable the Wireless station interface.
         /// </summary>
         public static void Disable()
