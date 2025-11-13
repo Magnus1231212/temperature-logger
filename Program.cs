@@ -1,11 +1,10 @@
+using nanoFramework.Device.OneWire;
+using nanoFramework.Hardware.Esp32;
 using System;
 using System.Diagnostics;
 using System.Threading;
-using nanoFramework.Hardware.Esp32;
-using nanoFramework.Device.OneWire;
+using temperature_logger.Models;
 using temperature_logger.Modules;
-using temperature_logger.Modules;
-using static temperature_logger.Modules.Display;
 
 namespace temperature_logger
 {
@@ -28,14 +27,38 @@ namespace temperature_logger
         {
             Setup();
 
-            TempSensor.initializeTempSensor();
+            Wifi.Initialize();
 
-            Debug.WriteLine(TempSensor.ReadTemperature().ToString());
-            Display.DisplayOled();
-            Lysdioder.Setup(0.5);
-            UpdateSystem();
+            //TempSensor.initializeTempSensor();
 
+            //Debug.WriteLine(TempSensor.ReadTemperature().ToString());
+            //Display.DisplayOled();
+            //Lysdioder.Setup(0.5);
+            //UpdateSystem();
 
+            // Create a sample DeviceConfig
+            //var cfg = new DeviceConfig
+            //{
+            //    WifiSSID = "MyNetwork",
+            //    WifiPassword = "SuperSecret"
+            //};
+
+            //// --- Save the config ---
+            //JsonStorage.Save(cfg, FileName);
+            //Debug.WriteLine("Config saved successfully.");
+
+            //// --- Load the config ---
+            //var loadedCfg = JsonStorage.Load<DeviceConfig>(FileName);
+            //if (loadedCfg != null)
+            //{
+            //    Debug.WriteLine("Config loaded successfully:");
+            //    Debug.WriteLine($"SSID: {loadedCfg.WifiSSID}");
+            //    Debug.WriteLine($"Password: {loadedCfg.WifiPassword}");
+            //}
+            //else
+            //{
+            //    Debug.WriteLine("Failed to load config.");
+            //}
 
             Debug.WriteLine("Hello from nanoFramework!");
 
