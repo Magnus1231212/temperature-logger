@@ -1,42 +1,98 @@
 using System;
 using System.Collections;
 using System.Diagnostics;
+using System.Text;
 using nanoFramework.Json;
+using nanoFramework.M2Mqtt;
+using nanoFramework.M2Mqtt.Messages;
+using temperature_logger.Models;
 
 namespace temperature_logger.Modules
 {
     internal static class Datalogger
     {
+        private const string ConfigFile = "config.json";
+
+        private static readonly DeviceConfig _config =
+            JsonStorage.Load<DeviceConfig>(ConfigFile);
+
         // Filnavne til lokale datafiler
         private const string MeasurementsFile = "measurements.json";
         private const string SentFile = "sent_measurements.json";
-        private const string TopicPrefix = "home/thermostat"; // MQTT-emne-prefix
+        private const string TopicPrefix = "home/thermostat";
 
-        // Klasse der beskriver én måling
-        public class Measurement
+        private static MqttClient _mqtt;
+
+        // Sørger for at MQTT-klienten er forbundet (med TLS, men uden cert-validering)
+        private static bool EnsureMqttConnected()
         {
-            public string ts { get; set; }    // Tidsstempel (ISO-format)
-            public double temp { get; set; }  // Aktuel temperatur
-            public double desired { get; set; } // Ønsket temperatur
-            public string dev { get; set; }   // Enheds-id
+            // Vi antager at _config er korrekt sat (ingen fallback)
+            try
+            {
+                if (_mqtt != null && _mqtt.IsConnected)
+                    return true;
+
+                _mqtt = new MqttClient(
+                    _config.MQTTHost,
+                    _config.MQTTPort,
+                    true,      // TLS slået til
+                    null,      // ingen CA-cert (simpelt setup)
+                    null,      // ingen client-cert
+                    MqttSslProtocols.TLSv1_2);
+
+                _mqtt.Connect(_config.MQTTClientId, _config.MQTTUsername, _config.MQTTPassword);
+
+                if (!_mqtt.IsConnected)
+                {
+                    Debug.WriteLine("[Datalogger] MQTT TLS connect failed");
+                    return false;
+                }
+
+                Debug.WriteLine("[Datalogger] MQTT connected (TLS)");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Datalogger] EnsureMqttConnected error: {ex.Message}");
+                return false;
+            }
         }
 
-        // Tilføjer én ny måling til den lokale JSON-fil
-        public static void AppendMeasurement(double temperature, double desired, string deviceId)
+        // Sender én payload via MQTT
+        private static bool PublishMqtt(string topic, string payload)
         {
             try
             {
-                var m = new Measurement
+                if (!EnsureMqttConnected())
+                    return false;
+
+                _mqtt.Publish(
+                    topic,
+                    Encoding.UTF8.GetBytes(payload));
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Datalogger] MQTT publish failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Tilføjer én ny måling til den lokale JSON-fil
+        public static void AppendMeasurement(double temperature)
+        {
+            try
+            {
+                var reading = new TemperatureReading
                 {
-                    ts = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"), // Gem tid i UTC-format
-                    temp = ((int)(temperature * 100)) / 100.0,              // Afrund til 2 decimaler
-                    desired = ((int)(desired * 100)) / 100.0,
-                    dev = deviceId ?? "thermo-unknown"                     // Fallback hvis ingen ID
+                    Timestamp = DateTime.UtcNow,
+                    Temperature = ((int)(temperature * 100)) / 100.0 // 2 decimaler
                 };
 
-                JsonStorage.Append(m, MeasurementsFile); // Gem i measurements.json
+                JsonStorage.Append(reading, MeasurementsFile);
 
-                Debug.WriteLine($"[Datalogger] Appended measurement {m.ts} temp={m.temp}");
+                Debug.WriteLine($"[Datalogger] Appended {reading.Timestamp:o} temp={reading.Temperature}");
             }
             catch (Exception ex)
             {
@@ -44,80 +100,64 @@ namespace temperature_logger.Modules
             }
         }
 
-        // Læser alle gemte målinger (returnerer tomt array hvis ingen findes)
-        public static Measurement[] ReadMeasurements()
+        // Læs alle gemte målinger
+        public static TemperatureReading[] ReadMeasurements()
         {
             try
             {
-                return JsonStorage.ReadArray<Measurement>(MeasurementsFile);
+                return JsonStorage.ReadArray<TemperatureReading>(MeasurementsFile);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[Datalogger] ReadMeasurements error: {ex.Message}");
-                return new Measurement[0];
+                return new TemperatureReading[0];
             }
         }
 
-        // Forsøger at sende alle lokale målinger via en publisher-funktion
-        public static int SyncPending(Func<string, string, bool> publisher, string overrideDeviceId = null)
+        // Sender alt der ikke er sendt endnu
+        public static int SyncPending()
         {
-            if (publisher == null) return 0;
-            int sentCount = 0; // Antal målinger sendt
+            int sentCount = 0;
 
             try
             {
                 var items = ReadMeasurements();
-                if (items == null || items.Length == 0) return 0;
 
-                var remaining = new ArrayList(); // Liste med målinger der ikke blev sendt
+                if (items.Length == 0) return 0;
+
+                var remaining = new ArrayList();
 
                 foreach (var item in items)
                 {
-                    var topic = $"{TopicPrefix}/{(overrideDeviceId ?? item.dev)}/telemetry"; // MQTT-emne
-                    string payload;
+                    // Brug clientId fra config
+                    var topic = $"{TopicPrefix}/{_config.MQTTClientId}/telemetry";
 
+                    string payload;
                     try
                     {
-                        payload = JsonConvert.SerializeObject(item); // Konverter objekt til JSON
-                        // eller JsonSerializer.SerializeObject(item) afhængig af version
+                        payload = JsonConvert.SerializeObject(item);
                     }
                     catch
                     {
-                        Debug.WriteLine("[Datalogger] Failed to serialize measurement -> skip");
+                        Debug.WriteLine("[Datalogger] JSON serialize failed");
                         continue;
                     }
 
-                    bool ok = false;
-                    try
-                    {
-                        ok = publisher(topic, payload); // Forsøg at sende via publisher
-                    }
-                    catch (Exception exPub)
-                    {
-                        Debug.WriteLine($"[Datalogger] Publisher threw: {exPub.Message}");
-                        ok = false;
-                    }
+                    bool ok = PublishMqtt(topic, payload);
 
                     if (ok)
                     {
-                        try { JsonStorage.Append(item, SentFile); } catch { } // Gem som "sendt"
+                        JsonStorage.Append(item, SentFile);
                         sentCount++;
                     }
                     else
                     {
-                        remaining.Add(item); // Behold målingen til senere
+                        remaining.Add(item);
                     }
                 }
 
-                try
-                {
-                    var remArr = (Measurement[])remaining.ToArray(typeof(Measurement));
-                    JsonStorage.Save(remArr, MeasurementsFile); // Gem kun de resterende (usendte)
-                }
-                catch (Exception exSave)
-                {
-                    Debug.WriteLine($"[Datalogger] Failed to save remaining measurements: {exSave.Message}");
-                }
+                // Gem de målinger der ikke blev sendt
+                var remArr = (TemperatureReading[])remaining.ToArray(typeof(TemperatureReading));
+                JsonStorage.Save(remArr, MeasurementsFile);
             }
             catch (Exception ex)
             {
@@ -128,25 +168,18 @@ namespace temperature_logger.Modules
             return sentCount;
         }
 
-        // Begræns antallet af målinger der gemmes lokalt (fjerner ældste)
+        // Begræns lokal historik
         public static void TrimToMostRecent(int maxItems)
         {
-            if (maxItems <= 0) return;
-            try
-            {
-                var all = ReadMeasurements();
-                if (all.Length <= maxItems) return;
+            var all = ReadMeasurements();
+            if (all.Length <= maxItems) return;
 
-                int start = all.Length - maxItems; // Startindeks for nyeste målinger
-                var trimmed = new Measurement[maxItems];
-                Array.Copy(all, start, trimmed, 0, maxItems); // Kopiér kun de nyeste
-                JsonStorage.Save(trimmed, MeasurementsFile); // Gem igen med færre elementer
-                Debug.WriteLine($"[Datalogger] Trimmed to {maxItems}");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[Datalogger] TrimToMostRecent error: {ex.Message}");
-            }
+            int start = all.Length - maxItems;
+            var trimmed = new TemperatureReading[maxItems];
+
+            Array.Copy(all, start, trimmed, 0, maxItems);
+
+            JsonStorage.Save(trimmed, MeasurementsFile);
         }
     }
 }

@@ -20,6 +20,7 @@
   <ItemGroup>
     <Compile Include="Dep\BasicFont.cs" />
     <Compile Include="Dep\DoubleByteFont.cs" />
+    <Compile Include="Modules\Datalogger.cs" />
     <Compile Include="Modules\Knapper.cs" />
     <Compile Include="Models\Config.cs" />
     <Compile Include="Models\TemperatureReading.cs" />
@@ -49,8 +50,17 @@
     <Reference Include="nanoFramework.Json">
       <HintPath>packages\nanoFramework.Json.2.2.203\lib\nanoFramework.Json.dll</HintPath>
     </Reference>
+    <Reference Include="nanoFramework.M2Mqtt">
+      <HintPath>packages\nanoFramework.M2Mqtt.5.1.199\lib\nanoFramework.M2Mqtt.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.M2Mqtt.Core">
+      <HintPath>packages\nanoFramework.M2Mqtt.5.1.199\lib\nanoFramework.M2Mqtt.Core.dll</HintPath>
+    </Reference>
     <Reference Include="nanoFramework.Runtime.Events">
       <HintPath>packages\nanoFramework.Runtime.Events.1.11.32\lib\nanoFramework.Runtime.Events.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.Runtime.Native">
+      <HintPath>packages\nanoFramework.Runtime.Native.1.7.11\lib\nanoFramework.Runtime.Native.dll</HintPath>
     </Reference>
     <Reference Include="nanoFramework.System.Collections">
       <HintPath>packages\nanoFramework.System.Collections.1.5.67\lib\nanoFramework.System.Collections.dll</HintPath>
@@ -75,6 +85,12 @@
     </Reference>
     <Reference Include="System.Math">
       <HintPath>packages\nanoFramework.System.Math.1.5.116\lib\System.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net">
+      <HintPath>packages\nanoFramework.System.Net.1.11.43\lib\System.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading">
+      <HintPath>packages\nanoFramework.System.Threading.1.1.52\lib\System.Threading.dll</HintPath>
     </Reference>
     <Reference Include="UnitsNet.Temperature">
       <HintPath>packages\UnitsNet.nanoFramework.Temperature.5.75.0\lib\UnitsNet.Temperature.dll</HintPath>
