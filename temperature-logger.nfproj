@@ -20,6 +20,7 @@
   <ItemGroup>
     <Compile Include="Dep\BasicFont.cs" />
     <Compile Include="Dep\DoubleByteFont.cs" />
+    <Compile Include="Dep\Wireless80211.cs" />
     <Compile Include="Modules\Knapper.cs" />
     <Compile Include="Models\Config.cs" />
     <Compile Include="Models\TemperatureReading.cs" />
@@ -27,11 +28,15 @@
     <Compile Include="Modules\SaveFileLocally.cs" />
     <Compile Include="Modules\TempSensor.cs" />
     <Compile Include="Modules\Lysdioder.cs" />
+    <Compile Include="Modules\WirelessAP.cs" />
     <Compile Include="Modules\Wifi.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Iot.Device.DhcpServer">
+      <HintPath>packages\nanoFramework.Iot.Device.DhcpServer.1.2.902\lib\Iot.Device.DhcpServer.dll</HintPath>
+    </Reference>
     <Reference Include="Iot.Device.Ds18b20">
       <HintPath>packages\nanoFramework.Iot.Device.Ds18b20.1.0.840\lib\Iot.Device.Ds18b20.dll</HintPath>
     </Reference>
@@ -52,6 +57,9 @@
     </Reference>
     <Reference Include="nanoFramework.Runtime.Events">
       <HintPath>packages\nanoFramework.Runtime.Events.1.11.32\lib\nanoFramework.Runtime.Events.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.Runtime.Native">
+      <HintPath>packages\nanoFramework.Runtime.Native.1.7.11\lib\nanoFramework.Runtime.Native.dll</HintPath>
     </Reference>
     <Reference Include="nanoFramework.System.Collections">
       <HintPath>packages\nanoFramework.System.Collections.1.5.67\lib\nanoFramework.System.Collections.dll</HintPath>
