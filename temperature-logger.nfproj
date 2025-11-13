@@ -29,6 +29,7 @@
     <Compile Include="Modules\SaveFileLocally.cs" />
     <Compile Include="Modules\TempSensor.cs" />
     <Compile Include="Modules\Lysdioder.cs" />
+    <Compile Include="Modules\WebServer.cs" />
     <Compile Include="Modules\WirelessAP.cs" />
     <Compile Include="Modules\Wifi.cs" />
     <Compile Include="Program.cs" />
@@ -97,6 +98,9 @@
     </Reference>
     <Reference Include="System.Net">
       <HintPath>packages\nanoFramework.System.Net.1.11.43\lib\System.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <HintPath>packages\nanoFramework.System.Net.Http.Server.1.5.196\lib\System.Net.Http.dll</HintPath>
     </Reference>
     <Reference Include="System.Threading">
       <HintPath>packages\nanoFramework.System.Threading.1.1.52\lib\System.Threading.dll</HintPath>
