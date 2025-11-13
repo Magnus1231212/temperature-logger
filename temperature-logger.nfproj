@@ -56,6 +56,12 @@
     <Reference Include="nanoFramework.Json">
       <HintPath>packages\nanoFramework.Json.2.2.203\lib\nanoFramework.Json.dll</HintPath>
     </Reference>
+    <Reference Include="nanoFramework.M2Mqtt">
+      <HintPath>packages\nanoFramework.M2Mqtt.5.1.199\lib\nanoFramework.M2Mqtt.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.M2Mqtt.Core">
+      <HintPath>packages\nanoFramework.M2Mqtt.5.1.199\lib\nanoFramework.M2Mqtt.Core.dll</HintPath>
+    </Reference>
     <Reference Include="nanoFramework.Runtime.Events">
       <HintPath>packages\nanoFramework.Runtime.Events.1.11.32\lib\nanoFramework.Runtime.Events.dll</HintPath>
     </Reference>
