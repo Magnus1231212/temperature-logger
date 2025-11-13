@@ -20,59 +20,32 @@ namespace temperature_logger
             // Setup 1-Wire pin
             Configuration.SetPinFunction(16, DeviceFunction.COM3_RX);
             Configuration.SetPinFunction(17, DeviceFunction.COM3_TX);
+
+            // Setup Tempsensor
+            TempSensor.initializeTempSensor();
+
+            // Setup knapper
+            Knapper.Setup(getCurrentTemperature: () => TempSensor.ReadTemperature());
+
+            // Setup display
+            Display.DisplayOled();
+
+            // Setup lysdioder
+            Lysdioder.Setup(0.5);
+
+            // Init WiFi
+            WifiManager.Initialize();
         }
 
         // The main entry point for the application
         public static void Main()
         {
+            // Setup device configuration
             Setup();
-
-            Wifi.Initialize();
-
-            //TempSensor.initializeTempSensor();
-
-            //Debug.WriteLine(TempSensor.ReadTemperature().ToString());
-            //Display.DisplayOled();
-            //Lysdioder.Setup(0.5);
-            //UpdateSystem();
-
-            // Create a sample DeviceConfig
-            //var cfg = new DeviceConfig
-            //{
-            //    WifiSSID = "MyNetwork",
-            //    WifiPassword = "SuperSecret"
-            //};
-
-            //// --- Save the config ---
-            //JsonStorage.Save(cfg, FileName);
-            //Debug.WriteLine("Config saved successfully.");
-
-            //// --- Load the config ---
-            //var loadedCfg = JsonStorage.Load<DeviceConfig>(FileName);
-            //if (loadedCfg != null)
-            //{
-            //    Debug.WriteLine("Config loaded successfully:");
-            //    Debug.WriteLine($"SSID: {loadedCfg.WifiSSID}");
-            //    Debug.WriteLine($"Password: {loadedCfg.WifiPassword}");
-            //}
-            //else
-            //{
-            //    Debug.WriteLine("Failed to load config.");
-            //}
 
             Debug.WriteLine("Hello from nanoFramework!");
 
             Thread.Sleep(Timeout.Infinite);
         }
-
-        private static void UpdateSystem()
-        {
-            // Opdater displayet
-            Display.ShowTemperatureDisplay();
-
-            // Opdater lysdioder ud fra temperaturforskellen
-            Lysdioder.UpdateStatus(Display.CurrentTemperature, Display.DesiredTemperature);
-        }
-
     }
 }
