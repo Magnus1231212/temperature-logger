@@ -27,6 +27,8 @@ namespace temperature_logger
         {
             Setup();
 
+            Wifi.Initialize();
+
             //TempSensor.initializeTempSensor();
 
             //Debug.WriteLine(TempSensor.ReadTemperature().ToString());
