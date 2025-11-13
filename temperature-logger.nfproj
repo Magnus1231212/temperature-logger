@@ -20,6 +20,8 @@
   <ItemGroup>
     <Compile Include="Dep\BasicFont.cs" />
     <Compile Include="Dep\DoubleByteFont.cs" />
+    <Compile Include="Dep\Wireless80211.cs" />
+    <Compile Include="Modules\Config.cs" />
     <Compile Include="Modules\Knapper.cs" />
     <Compile Include="Models\Config.cs" />
     <Compile Include="Models\TemperatureReading.cs" />
