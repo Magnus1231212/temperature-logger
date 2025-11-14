@@ -20,13 +20,13 @@
   <ItemGroup>
     <Compile Include="Dep\BasicFont.cs" />
     <Compile Include="Dep\DoubleByteFont.cs" />
-    <Compile Include="Dep\Wireless80211.cs" />
-    <Compile Include="Modules\Config.cs" />
+    <Compile Include="Modules\DeepSleepManager.cs" />
     <Compile Include="Modules\Knapper.cs" />
     <Compile Include="Models\Config.cs" />
     <Compile Include="Models\TemperatureReading.cs" />
     <Compile Include="Modules\Display.cs" />
     <Compile Include="Modules\SaveFileLocally.cs" />
+    <Compile Include="Modules\TemperatureApi.cs" />
     <Compile Include="Modules\TempSensor.cs" />
     <Compile Include="Modules\Lysdioder.cs" />
     <Compile Include="Modules\WebServer.cs" />
@@ -75,6 +75,9 @@
     <Reference Include="nanoFramework.System.Text">
       <HintPath>packages\nanoFramework.System.Text.1.3.42\lib\nanoFramework.System.Text.dll</HintPath>
     </Reference>
+    <Reference Include="nanoFramework.WebServer">
+      <HintPath>packages\nanoFramework.WebServer.1.2.131\lib\nanoFramework.WebServer.dll</HintPath>
+    </Reference>
     <Reference Include="System.Device.Gpio">
       <HintPath>packages\nanoFramework.System.Device.Gpio.1.1.57\lib\System.Device.Gpio.dll</HintPath>
     </Reference>
@@ -111,6 +114,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="wwwroot\graph.html" />
   </ItemGroup>
   <Import Project="$(NanoFrameworkProjectSystemPath)NFProjectSystem.CSharp.targets" Condition="Exists('$(NanoFrameworkProjectSystemPath)NFProjectSystem.CSharp.targets')" />
   <ProjectExtensions>
