@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Temperaturgraf</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            margin: 20px;
+        }
+
+        button {
+            margin: 5px;
+            padding: 8px 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Temperaturgraf</h1>
+
+    <div>
+        <button data-span="day">Døgn</button>
+        <button data-span="week">Uge</button>
+        <button data-span="month">Måned</button>
+    </div>
+
+    <div>
+        <button id="prev">◀ Forrige</button>
+        <button id="next">Næste ▶</button>
+    </div>
+
+    <canvas id="tempChart" width="380" height="180"></canvas>
+
+    <script>
+        let currentSpan = "day";
+        let currentOffset = 0;
+
+        const ctx = document.getElementById("tempChart").getContext("2d");
+
+        const chart = new Chart(ctx, {
+            type: "line",
+            data: {
+                datasets: [{
+                    label: "Temperatur (°C)",
+                    data: [],
+                    tension: 0.2,
+                    borderWidth: 2,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                parsing: false,
+                scales: {
+                    x: { type: "time" },
+                    y: { title: { display: true, text: "°C" } }
+                }
+            }
+        });
+
+        async function loadData() {
+            const url = `/api/temperature?span=${currentSpan}&offset=${currentOffset}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            chart.data.datasets[0].data = data;
+            chart.update();
+        }
+
+        document.querySelectorAll("button[data-span]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                currentSpan = btn.dataset.span;
+                currentOffset = 0;  // reset til nuværende periode
+
+                loadData();
+            });
+        });
+
+        document.getElementById("prev").addEventListener("click", () => {
+            currentOffset++;
+
+            loadData();
+        });
+
+        document.getElementById("next").addEventListener("click", () => {
+            if (currentOffset > 0) {
+                currentOffset--;
+
+                loadData();
+            }
+        });
+
+        loadData();
+    </script>
+</body>
+</html>
