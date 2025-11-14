@@ -22,11 +22,14 @@
     <Compile Include="Dep\DoubleByteFont.cs" />
     <Compile Include="Dep\Wireless80211.cs" />
     <Compile Include="Modules\Config.cs" />
+    <Compile Include="Modules\Datalogger.cs" />
+    <Compile Include="Modules\DeepSleepManager.cs" />
     <Compile Include="Modules\Knapper.cs" />
     <Compile Include="Models\Config.cs" />
     <Compile Include="Models\TemperatureReading.cs" />
     <Compile Include="Modules\Display.cs" />
     <Compile Include="Modules\SaveFileLocally.cs" />
+    <Compile Include="Modules\TemperatureApi.cs" />
     <Compile Include="Modules\TempSensor.cs" />
     <Compile Include="Modules\Lysdioder.cs" />
     <Compile Include="Modules\WebServer.cs" />
@@ -112,6 +115,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="wwwroot\graph.html" />
   </ItemGroup>
   <Import Project="$(NanoFrameworkProjectSystemPath)NFProjectSystem.CSharp.targets" Condition="Exists('$(NanoFrameworkProjectSystemPath)NFProjectSystem.CSharp.targets')" />
   <ProjectExtensions>
